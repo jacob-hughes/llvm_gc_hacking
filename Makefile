@@ -1,13 +1,34 @@
 all: parser
 
+OBJS = parser.o  \
+       codegen.o \
+       main.o    \
+       tokens.o  \
+       corefn.o  \
+	   native.o  \
+
+LLVMCONFIG = llvm-config
+CPPFLAGS = `$(LLVMCONFIG) --cppflags` -std=c++11
+LDFLAGS = `$(LLVMCONFIG) --ldflags` -lpthread -ldl -lz -lncurses -rdynamic
+LIBS = `$(LLVMCONFIG) --libs`
+
 clean:
-	rm parser.cpp parser tokens.inc
+	$(RM) -rf parser.cpp parser.hpp parser tokens.cpp $(OBJS)
 
 parser.cpp: parser.y
 	bison -d -o $@ $^
+	
+parser.hpp: parser.cpp
 
-tokens.inc: tokens.l
-	lex -o $@ $^
+tokens.cpp: tokens.l parser.hpp
+	flex -o $@ $^
 
-parser: parser.cpp codegen.cpp main.cpp tokens.inc
-	g++ -o $@ `llvm-config --libs core jit native --cxxflags --ldflags` parser.cpp codegen.cpp main.cpp
+%.o: %.cpp
+	g++ -c $(CPPFLAGS) -o $@ $<
+
+
+parser: $(OBJS)
+	g++ -o $@ $(OBJS) $(LIBS) $(LDFLAGS)
+
+test: parser example.txt
+	cat example.txt | ./parser

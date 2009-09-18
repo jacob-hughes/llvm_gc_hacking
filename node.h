@@ -1,6 +1,6 @@
 #include <iostream>
 #include <vector>
-#include <llvm/Value.h>
+#include <llvm/IR/Value.h>
 
 class CodeGenContext;
 class NStatement;
@@ -14,7 +14,7 @@ typedef std::vector<NVariableDeclaration*> VariableList;
 class Node {
 public:
 	virtual ~Node() {}
-	virtual llvm::Value* codeGen(CodeGenContext& context) { }
+	virtual llvm::Value* codeGen(CodeGenContext& context) { return NULL; }
 };
 
 class NExpression : public Node {
@@ -48,7 +48,7 @@ class NMethodCall : public NExpression {
 public:
 	const NIdentifier& id;
 	ExpressionList arguments;
-	NMethodCall(const NIdentifier& id, std::vector<NExpression*>& arguments) :
+	NMethodCall(const NIdentifier& id, ExpressionList& arguments) :
 		id(id), arguments(arguments) { }
 	NMethodCall(const NIdentifier& id) : id(id) { }
 	virtual llvm::Value* codeGen(CodeGenContext& context);
@@ -88,16 +88,35 @@ public:
 	virtual llvm::Value* codeGen(CodeGenContext& context);
 };
 
+class NReturnStatement : public NStatement {
+public:
+	NExpression& expression;
+	NReturnStatement(NExpression& expression) : 
+		expression(expression) { }
+	virtual llvm::Value* codeGen(CodeGenContext& context);
+};
+
 class NVariableDeclaration : public NStatement {
 public:
 	const NIdentifier& type;
 	NIdentifier& id;
 	NExpression *assignmentExpr;
 	NVariableDeclaration(const NIdentifier& type, NIdentifier& id) :
-		type(type), id(id) { }
+		type(type), id(id) { assignmentExpr = NULL; }
 	NVariableDeclaration(const NIdentifier& type, NIdentifier& id, NExpression *assignmentExpr) :
 		type(type), id(id), assignmentExpr(assignmentExpr) { }
 	virtual llvm::Value* codeGen(CodeGenContext& context);
+};
+
+class NExternDeclaration : public NStatement {
+public:
+    const NIdentifier& type;
+    const NIdentifier& id;
+    VariableList arguments;
+    NExternDeclaration(const NIdentifier& type, const NIdentifier& id,
+            const VariableList& arguments) :
+        type(type), id(id), arguments(arguments) {}
+    virtual llvm::Value* codeGen(CodeGenContext& context);
 };
 
 class NFunctionDeclaration : public NStatement {
@@ -107,7 +126,7 @@ public:
 	VariableList arguments;
 	NBlock& block;
 	NFunctionDeclaration(const NIdentifier& type, const NIdentifier& id, 
-			const std::vector<NVariableDeclaration*>& arguments, NBlock& block) :
+			const VariableList& arguments, NBlock& block) :
 		type(type), id(id), arguments(arguments), block(block) { }
 	virtual llvm::Value* codeGen(CodeGenContext& context);
 };
