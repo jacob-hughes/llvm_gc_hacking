@@ -153,7 +153,7 @@ Value* NReturnStatement::codeGen(CodeGenContext& context)
 Value* NVariableDeclaration::codeGen(CodeGenContext& context)
 {
 	std::cout << "Creating variable declaration " << type.name << " " << id.name << endl;
-	AllocaInst *alloc = new AllocaInst(typeOf(type), id.name.c_str(), context.currentBlock());
+	AllocaInst *alloc = new AllocaInst(typeOf(type), 0, id.name.c_str(), context.currentBlock());
 	context.locals()[id.name] = alloc;
 	if (assignmentExpr != NULL) {
 		NAssignment assn(id, *assignmentExpr);
