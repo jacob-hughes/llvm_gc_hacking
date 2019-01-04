@@ -1,4 +1,6 @@
 *.o
+*.s
+*.ll
 parser.cpp
 parser.hpp
 tokens.cpp
