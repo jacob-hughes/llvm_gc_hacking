@@ -6,9 +6,10 @@ OBJS = parser.o  \
        tokens.o  \
        corefn.o  \
 	   native.o  \
+	   allocator.o
 
 LLVMCONFIG = llvm-config
-CPPFLAGS = `$(LLVMCONFIG) --cppflags` -std=c++11
+CPPFLAGS = `$(LLVMCONFIG) --cppflags` -std=c++11 -g
 LDFLAGS = `$(LLVMCONFIG) --ldflags` -lpthread -ldl -lz -lncurses -rdynamic
 LIBS = `$(LLVMCONFIG) --libs`
 
