@@ -1,9 +1,11 @@
-int do_math(int a) {
-  int x = a * 5
+int foo() {
+    int x = 5
+    logger(x)
+    return 1
 }
 
 int main() {
-  do_math(5)
+  foo()
   return 1
 }
 
