@@ -74,5 +74,5 @@ void createEchoFunction(CodeGenContext& context, llvm::Function* printfFn)
 
 void createCoreFunctions(CodeGenContext& context){
 	llvm::Function* printfFn = createPrintfFunction(context);
-    createEchoFunction(context, printfFn);
+    /* createEchoFunction(context, printfFn); */
 }
