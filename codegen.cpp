@@ -72,7 +72,11 @@ Value* NIdentifier::codeGen(CodeGenContext& context)
 		std::cerr << "undeclared variable " << name << endl;
 		return NULL;
 	}
-	return new LoadInst(context.locals()[name], "", false, context.currentBlock());
+
+	/* return new LoadInst(context.locals()[name], "", false, context.currentBlock()); // we need to deref the ptr */
+    
+	Value* ptr = new LoadInst(context.locals()[name], "", false, context.currentBlock());
+	return new LoadInst(ptr, "", false, context.currentBlock()); // we need to deref the ptr
 }
 
 Value* NMethodCall::codeGen(CodeGenContext& context)
@@ -117,7 +121,19 @@ Value* NAssignment::codeGen(CodeGenContext& context)
 		std::cerr << "undeclared variable " << lhs.name << endl;
 		return NULL;
 	}
-	return new StoreInst(rhs.codeGen(context), context.locals()[lhs.name], false, context.currentBlock());
+    
+    // Make external allocation call
+
+	std::cout << "Entering gc_alloc function" << endl;
+	Function *function = context.module->getFunction("gc_alloc");
+	if (function == NULL) {
+		std::cerr << "no such function: gc_alloc" << std::endl;
+	}
+	std::vector<Value*> args;
+    args.push_back(rhs.codeGen(context));
+	CallInst *call = CallInst::Create(function, makeArrayRef(args), "", context.currentBlock());
+
+	return new StoreInst(call, context.locals()[lhs.name], false, context.currentBlock());
 }
 
 Value* NBlock::codeGen(CodeGenContext& context)
@@ -149,7 +165,7 @@ Value* NReturnStatement::codeGen(CodeGenContext& context)
 Value* NVariableDeclaration::codeGen(CodeGenContext& context)
 {
 	std::cout << "Creating variable declaration " << type.name << " " << id.name << endl;
-	AllocaInst *alloc = new AllocaInst(typeOf(type), 0, id.name.c_str(), context.currentBlock());
+	AllocaInst *alloc = new AllocaInst(Type::getInt64PtrTy(MyContext), 0, id.name.c_str(), context.currentBlock());
 	context.locals()[id.name] = alloc;
 	if (assignmentExpr != NULL) {
 		NAssignment assn(id, *assignmentExpr);

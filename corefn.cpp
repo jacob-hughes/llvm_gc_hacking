@@ -20,6 +20,18 @@ llvm::Function* createPrintfFunction(CodeGenContext& context)
     llvm::Function *func = llvm::Function::Create(
                 printf_type, llvm::Function::ExternalLinkage,
                 llvm::Twine("printf"),
+llvm::Function* createGcAllocFunction(CodeGenContext& context)
+{
+    std::vector<llvm::Type*> gc_alloc_arg_types;
+    gc_alloc_arg_types.push_back(llvm::Type::getInt64Ty(MyContext)); //char*
+
+    llvm::FunctionType* gc_alloc_ty =
+        llvm::FunctionType::get(
+            llvm::Type::getInt64PtrTy(MyContext), gc_alloc_arg_types, false);
+
+    llvm::Function *func = llvm::Function::Create(
+                gc_alloc_ty, llvm::Function::ExternalLinkage,
+                llvm::Twine("gc_alloc"),
                 context.module
            );
     func->setCallingConv(llvm::CallingConv::C);
@@ -74,5 +86,6 @@ void createEchoFunction(CodeGenContext& context, llvm::Function* printfFn)
 
 void createCoreFunctions(CodeGenContext& context){
 	llvm::Function* printfFn = createPrintfFunction(context);
+    createGcAllocFunction(context);
     /* createEchoFunction(context, printfFn); */
 }
