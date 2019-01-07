@@ -178,7 +178,7 @@ Value* NFunctionDeclaration::codeGen(CodeGenContext& context)
 		argTypes.push_back(typeOf((**it).type));
 	}
 	FunctionType *ftype = FunctionType::get(typeOf(type), makeArrayRef(argTypes), false);
-	Function *function = Function::Create(ftype, GlobalValue::InternalLinkage, id.name.c_str(), context.module);
+	Function *function = Function::Create(ftype, GlobalValue::ExternalLinkage, id.name.c_str(), context.module);
 	BasicBlock *bblock = BasicBlock::Create(MyContext, "entry", function, 0);
 
 	context.pushBlock(bblock);
