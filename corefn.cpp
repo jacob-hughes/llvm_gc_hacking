@@ -8,18 +8,25 @@ extern int yyparse();
 extern NBlock* programBlock;
 
 
-llvm::Function* createPrintfFunction(CodeGenContext& context)
+llvm::Function* createLogFunction(CodeGenContext& context)
 {
-    std::vector<llvm::Type*> printf_arg_types;
-    printf_arg_types.push_back(llvm::Type::getInt8PtrTy(MyContext)); //char*
+    std::vector<llvm::Type*> log_arg_types;
+    log_arg_types.push_back(llvm::Type::getInt64Ty(MyContext)); //char*
 
-    llvm::FunctionType* printf_type =
+    llvm::FunctionType* log_type =
         llvm::FunctionType::get(
-            llvm::Type::getInt32Ty(MyContext), printf_arg_types, true);
+            llvm::Type::getInt64Ty(MyContext), log_arg_types, true);
 
     llvm::Function *func = llvm::Function::Create(
-                printf_type, llvm::Function::ExternalLinkage,
-                llvm::Twine("printf"),
+                log_type, llvm::Function::ExternalLinkage,
+                llvm::Twine("logger"),
+                context.module
+           );
+    func->setCallingConv(llvm::CallingConv::C);
+    return func;
+}
+
+
 llvm::Function* createGcAllocFunction(CodeGenContext& context)
 {
     std::vector<llvm::Type*> gc_alloc_arg_types;
@@ -85,7 +92,7 @@ void createEchoFunction(CodeGenContext& context, llvm::Function* printfFn)
 }
 
 void createCoreFunctions(CodeGenContext& context){
-	llvm::Function* printfFn = createPrintfFunction(context);
+	createLogFunction(context);
     createGcAllocFunction(context);
     /* createEchoFunction(context, printfFn); */
 }
