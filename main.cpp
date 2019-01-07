@@ -36,9 +36,12 @@ int main(int argc, char **argv)
 	InitializeNativeTargetAsmParser();
 	CodeGenContext context;
 	createCoreFunctions(context);
-	context.generateCode(*programBlock);
-	context.runCode();
-	
+    
+	/* context.generateCode(*programBlock); */
+	programBlock->codeGen(context); /* emit bytecode for the toplevel block */
+    std::cout << "BEGIN_IR" << std::endl;
+	context.module->print(llvm::errs(),nullptr);
+
 	return 0;
 }
 

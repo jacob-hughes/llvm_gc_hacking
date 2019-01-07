@@ -17,16 +17,14 @@ void CodeGenContext::generateCode(NBlock& root)
 	
 	/* Push a new variable/block context */
 	pushBlock(bblock);
-	root.codeGen(*this); /* emit bytecode for the toplevel block */
 	ReturnInst::Create(MyContext, bblock);
 	popBlock();
 	
 	/* Print the bytecode in a human-readable format 
 	   to see if our program compiled properly
 	 */
-    std::cout << "BEGIN_IR" << std::endl;
-	module->print(llvm::errs(),nullptr);
-    std::cout << std::endl;
+    /* module->dump(); */
+    std::cerr << std::endl;
 
 }
 
