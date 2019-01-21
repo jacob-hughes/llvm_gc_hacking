@@ -1,10 +1,10 @@
 int foo() {
-    int x = 5
+    int x = 6
     logger(x)
-    return 1
+    return x
 }
 
-int main() {
+int entry_point() {
   foo()
   return 1
 }

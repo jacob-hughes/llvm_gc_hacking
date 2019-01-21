@@ -7,7 +7,6 @@ using namespace std;
 extern int yyparse();
 extern FILE* yyin;
 extern NBlock* programBlock;
-
 void createCoreFunctions(CodeGenContext& context);
 
 int main(int argc, char **argv)

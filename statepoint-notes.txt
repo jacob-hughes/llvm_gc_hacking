@@ -1,0 +1,7 @@
+Statepoints
+
+At the most abstract level, inserting a safepoint can be thought of as replacing a call instruction with a call to a multiple return value function which both calls the original target of the call, returns its result, and returns updated values for any live pointers to garbage collected objects.
+
+There is a sequence of intrinsic calls to perform this, known collectively as a
+"statepoint relocation sequence". 
+
