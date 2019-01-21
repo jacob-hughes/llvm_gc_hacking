@@ -15,7 +15,7 @@ llvm::Function* createLogFunction(CodeGenContext& context)
 
     llvm::FunctionType* log_type =
         llvm::FunctionType::get(
-            llvm::Type::getInt64Ty(MyContext), log_arg_types, true);
+            llvm::Type::getInt64Ty(MyContext), log_arg_types, false);
 
     llvm::Function *func = llvm::Function::Create(
                 log_type, llvm::Function::ExternalLinkage,
@@ -34,7 +34,7 @@ llvm::Function* createGcAllocFunction(CodeGenContext& context)
 
     llvm::FunctionType* gc_alloc_ty =
         llvm::FunctionType::get(
-            llvm::Type::getInt64PtrTy(MyContext), gc_alloc_arg_types, false);
+            llvm::Type::getInt64PtrTy(MyContext, 1), gc_alloc_arg_types, false);
 
     llvm::Function *func = llvm::Function::Create(
                 gc_alloc_ty, llvm::Function::ExternalLinkage,

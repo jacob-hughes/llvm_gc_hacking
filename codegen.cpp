@@ -4,30 +4,6 @@
 
 using namespace std;
 
-/* Compile the AST into a module */
-void CodeGenContext::generateCode(NBlock& root)
-{
-	std::cout << "Generating code...\n";
-	
-	/* Create the top level interpreter function to call as entry */
-	vector<Type*> argTypes;
-	FunctionType *ftype = FunctionType::get(Type::getVoidTy(MyContext), makeArrayRef(argTypes), false);
-	mainFunction = Function::Create(ftype, GlobalValue::InternalLinkage, "main", module);
-	BasicBlock *bblock = BasicBlock::Create(MyContext, "entry", mainFunction, 0);
-	
-	/* Push a new variable/block context */
-	pushBlock(bblock);
-	ReturnInst::Create(MyContext, bblock);
-	popBlock();
-	
-	/* Print the bytecode in a human-readable format 
-	   to see if our program compiled properly
-	 */
-    /* module->dump(); */
-    std::cerr << std::endl;
-
-}
-
 /* Executes the AST by running the main function */
 GenericValue CodeGenContext::runCode() {
 	std::cout << "Running code...\n";
@@ -165,7 +141,7 @@ Value* NReturnStatement::codeGen(CodeGenContext& context)
 Value* NVariableDeclaration::codeGen(CodeGenContext& context)
 {
 	std::cout << "Creating variable declaration " << type.name << " " << id.name << endl;
-	AllocaInst *alloc = new AllocaInst(Type::getInt64PtrTy(MyContext), 0, id.name.c_str(), context.currentBlock());
+	AllocaInst *alloc = new AllocaInst(Type::getInt64PtrTy(MyContext, 1), 0, id.name.c_str(), context.currentBlock());
 	context.locals()[id.name] = alloc;
 	if (assignmentExpr != NULL) {
 		NAssignment assn(id, *assignmentExpr);
@@ -196,6 +172,7 @@ Value* NFunctionDeclaration::codeGen(CodeGenContext& context)
 	FunctionType *ftype = FunctionType::get(typeOf(type), makeArrayRef(argTypes), false);
 	Function *function = Function::Create(ftype, GlobalValue::ExternalLinkage, id.name.c_str(), context.module);
 	BasicBlock *bblock = BasicBlock::Create(MyContext, "entry", function, 0);
+    function->setGC("statepoint-example");
 
 	context.pushBlock(bblock);
 
