@@ -1,4 +1,4 @@
-all: parser
+all: compile 
 
 OBJS = parser.o  \
        codegen.o \
@@ -6,7 +6,6 @@ OBJS = parser.o  \
        tokens.o  \
        corefn.o  \
 	   native.o  \
-	   allocator.o
 
 LLVMCONFIG = llvm-config
 CPPFLAGS = `$(LLVMCONFIG) --cppflags` -std=c++11 -g
@@ -15,6 +14,8 @@ LIBS = `$(LLVMCONFIG) --libs`
 
 clean:
 	$(RM) -rf parser.cpp parser.hpp parser tokens.cpp $(OBJS)
+	cd runtime && make clean
+	$(RM) -f build/*
 
 parser.cpp: parser.y
 	bison -d -o $@ $^
@@ -25,11 +26,20 @@ tokens.cpp: tokens.l parser.hpp
 	flex -o $@ $^
 
 %.o: %.cpp
-	g++ -c $(CPPFLAGS) -o $@ $<
-
+	clang++ -c $(CPPFLAGS) -o $@ $<
 
 parser: $(OBJS)
-	g++ -o $@ $(OBJS) $(LIBS) $(LDFLAGS)
+	clang++ -o parser  $(OBJS) $(LIBS) $(LDFLAGS)
 
-test: parser example.txt
-	cat example.txt | ./parser
+gc:
+	+$(MAKE) -C runtime
+
+compile: parser gc example.txt
+	./parser example.txt 2>&1 | sed -u 1,/BEGIN_IR/d > build/out.ll
+	# Perform statepoint relocation opt pass
+	opt -rewrite-statepoints-for-gc -S -o build/out-sp.ll build/out.ll
+	# # Assemble IR
+	llc -o build/out-sp.s build/out-sp.ll
+	clang++ -c -o build/out-sp.o build/out-sp.s
+	objcopy --globalize-symbol=__LLVM_StackMaps build/out-sp.o build/out-sp-globalised.o
+	clang++ -o build/a.out build/out-sp-globalised.o runtime/allocator.o runtime/statepoint.o
