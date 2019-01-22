@@ -1,7 +1,12 @@
+int bar(int y) {
+    force_gc()
+    return 1 
+}
+
 int foo() {
-    int x = 6
-    logger(x)
-    return x
+    int x = 5
+    bar(x)
+    return 1
 }
 
 int entry_point() {
