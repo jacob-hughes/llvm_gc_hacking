@@ -11,11 +11,11 @@ extern NBlock* programBlock;
 llvm::Function* createLogFunction(CodeGenContext& context)
 {
     std::vector<llvm::Type*> log_arg_types;
-    log_arg_types.push_back(llvm::Type::getInt64Ty(MyContext)); //char*
+    log_arg_types.push_back(llvm::Type::getInt64PtrTy(MyContext, 1)); //char*
 
     llvm::FunctionType* log_type =
         llvm::FunctionType::get(
-            llvm::Type::getInt64Ty(MyContext), log_arg_types, false);
+            llvm::Type::getVoidTy(MyContext), log_arg_types, false);
 
     llvm::Function *func = llvm::Function::Create(
                 log_type, llvm::Function::ExternalLinkage,

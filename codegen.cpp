@@ -19,7 +19,7 @@ GenericValue CodeGenContext::runCode() {
 static Type *typeOf(const NIdentifier& type) 
 {
 	if (type.name.compare("int") == 0) {
-		return Type::getInt64Ty(MyContext);
+		return Type::getInt64PtrTy(MyContext, 1);
 	}
 	else if (type.name.compare("double") == 0) {
 		return Type::getDoubleTy(MyContext);
@@ -32,7 +32,16 @@ static Type *typeOf(const NIdentifier& type)
 Value* NInteger::codeGen(CodeGenContext& context)
 {
 	std::cout << "Creating integer: " << value << endl;
-	return ConstantInt::get(Type::getInt64Ty(MyContext), value, true);
+	Value* val = ConstantInt::get(Type::getInt64Ty(MyContext), value, true);
+
+	std::cout << "Entering gc_alloc function" << endl;
+	Function *function = context.module->getFunction("gc_alloc");
+	if (function == NULL) {
+		std::cerr << "no such function: gc_alloc" << std::endl;
+	}
+	std::vector<Value*> args;
+    args.push_back(val);
+	return CallInst::Create(function, makeArrayRef(args), "", context.currentBlock());
 }
 
 Value* NDouble::codeGen(CodeGenContext& context)
@@ -49,10 +58,10 @@ Value* NIdentifier::codeGen(CodeGenContext& context)
 		return NULL;
 	}
 
-	/* return new LoadInst(context.locals()[name], "", false, context.currentBlock()); // we need to deref the ptr */
+	return new LoadInst(context.locals()[name], "", false, context.currentBlock()); 
     
-	Value* ptr = new LoadInst(context.locals()[name], "", false, context.currentBlock());
-	return new LoadInst(ptr, "", false, context.currentBlock()); // we need to deref the ptr
+	/* Value* ptr = new LoadInst(context.locals()[name], "", false, context.currentBlock()); */
+	/* return new LoadInst(ptr, "", false, context.currentBlock()); // we need to deref the ptr */
 }
 
 Value* NMethodCall::codeGen(CodeGenContext& context)
@@ -98,18 +107,7 @@ Value* NAssignment::codeGen(CodeGenContext& context)
 		return NULL;
 	}
     
-    // Make external allocation call
-
-	std::cout << "Entering gc_alloc function" << endl;
-	Function *function = context.module->getFunction("gc_alloc");
-	if (function == NULL) {
-		std::cerr << "no such function: gc_alloc" << std::endl;
-	}
-	std::vector<Value*> args;
-    args.push_back(rhs.codeGen(context));
-	CallInst *call = CallInst::Create(function, makeArrayRef(args), "", context.currentBlock());
-
-	return new StoreInst(call, context.locals()[lhs.name], false, context.currentBlock());
+	return new StoreInst(rhs.codeGen(context), context.locals()[lhs.name], false, context.currentBlock());
 }
 
 Value* NBlock::codeGen(CodeGenContext& context)

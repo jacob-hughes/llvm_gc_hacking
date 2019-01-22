@@ -12,6 +12,7 @@ statepoint_table_t* table;
 
 
 extern "C" {
+    int entry_point();
 
     long* gc_alloc(long val) {
         std::cout << "Mallocing: " << val <<std::endl; 
@@ -20,8 +21,8 @@ extern "C" {
         return ptr;
     }
 
-    void logger(long val) {
-        std::cout << "Logger: " << val << std::endl;
+    void logger(long *val) {
+        std::cout << "Logger: " << *val << std::endl;
     }
 
     void genTable() {
@@ -69,7 +70,7 @@ extern "C" {
     }
 
     int main() {
-        genTable();
+        entry_point();
         return 0;
     }
 
