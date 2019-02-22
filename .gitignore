@@ -6,3 +6,4 @@ parser.hpp
 tokens.cpp
 parser
 *.out
+example.txt
