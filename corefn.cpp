@@ -26,6 +26,23 @@ llvm::Function* createLogFunction(CodeGenContext& context)
     return func;
 }
 
+llvm::Function* createForceGcFunction(CodeGenContext& context)
+{
+    std::vector<llvm::Type*> no_args;
+
+    llvm::FunctionType* force_gc_ty =
+        llvm::FunctionType::get(
+            llvm::Type::getVoidTy(MyContext), no_args, false);
+
+    llvm::Function *func = llvm::Function::Create(
+                force_gc_ty, llvm::Function::ExternalLinkage,
+                llvm::Twine("force_gc"),
+                context.module
+           );
+    func->setCallingConv(llvm::CallingConv::C);
+    return func;
+}
+
 
 llvm::Function* createGcAllocFunction(CodeGenContext& context)
 {
@@ -94,5 +111,6 @@ void createEchoFunction(CodeGenContext& context, llvm::Function* printfFn)
 void createCoreFunctions(CodeGenContext& context){
 	createLogFunction(context);
     createGcAllocFunction(context);
+    createForceGcFunction(context);
     /* createEchoFunction(context, printfFn); */
 }
