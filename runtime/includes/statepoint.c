@@ -94,6 +94,7 @@ frame_info_t* generate_frame_info(callsite_header_t* callsite, function_info_t* 
     */
     
     
+    printf("numlocs %d \n", numLocations);
     assert((numLocations % 2) == 0 && "all of the pointer locations come in pairs!");
     uint16_t numSlots = numLocations / 2; 
     uint16_t numActualFrameSlots = numSlots;

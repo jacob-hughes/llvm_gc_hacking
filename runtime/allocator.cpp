@@ -10,22 +10,40 @@ extern uint8_t STACKMAP[];
 bool tableBuilt = false;
 statepoint_table_t* table;
 
+int HEAPSIZE = 10 * sizeof(long);
+long* FROMSPACE = (long*) malloc(HEAPSIZE);
+long* TOSPACE = (long*) malloc(HEAPSIZE);
 
 extern "C" {
-    int entry_point();
+    extern long* entry_point(long *x);
+
+    extern void force_gc();
 
     long* gc_alloc(long val) {
-        std::cout << "Mallocing: " << val <<std::endl; 
-        long *ptr = (long*) malloc(sizeof(long));
+        std::cout << "Mallocing in fromspace: " << val <<std::endl; 
+        long *ptr = FROMSPACE;
         *ptr = val;
+        FROMSPACE += sizeof(long);
         return ptr;
+    }
+
+    long* heapSwp(long *ptr) {
+        long val = *ptr;
+        *TOSPACE = val;
+        std::cout << "Old Fromspace Ptr: " << ptr << std::endl;
+        long* newPtr = TOSPACE;
+        // zero the memory at the old ptr
+        *ptr = 0;
+        TOSPACE += sizeof(long);
+        std::cout << "New Ptr in tospace: " << newPtr << std::endl;
+        return newPtr;
     }
 
     void logger(long *val) {
         std::cout << "Logger: " << *val << std::endl;
     }
 
-    void genTable() {
+    void walkStack(uint8_t* stackPtr) {
         void* stackmap = (void*)&STACKMAP;
         if(!tableBuilt) {
             printf("printing the table...\n");
@@ -35,14 +53,14 @@ extern "C" {
             // destroy_table(table);
             tableBuilt = true;
         }
-    }
 
-    void walkStack(uint8_t* stackPtr) {
         std::cout << "Beginning GC" << std::endl;
         uint64_t retAddr = *((uint64_t*)stackPtr);
+        printf("Got RA: 0x%" PRIX64 "\n", retAddr);
         stackPtr += sizeof(void*); // step into frame
         frame_info_t* frame = lookup_return_address(table, retAddr);
         while(frame != NULL) {
+            std::cout << "Entered Loop" << std::endl;
 
             uint16_t i;
             for(i = 0; i < frame->numSlots; i++) {
@@ -52,8 +70,12 @@ extern "C" {
                     assert(false && "unexpected derived pointer\n");
                 }
 
-                uint32_t** ptr = (uint32_t**)(stackPtr + ptrSlot.offset);
-                std::cout << "Found Pointer: " << ptr << std::endl;
+                uint64_t** ptr = (uint64_t**)(stackPtr + ptrSlot.offset);
+                printf("Found Ptr: 0x%" PRIX64 "\n", ptr);
+                printf("Performing GC update...\n");
+                uint64_t* newPtr = (uint64_t*) heapSwp((long*) *ptr);
+                *ptr = newPtr;
+                printf("Quick Access of new Ptr: %d \n", **ptr);
             }
 
             // move to next frame. seems we have to add one pointer size to
@@ -70,9 +92,8 @@ extern "C" {
     }
 
     int main() {
-        entry_point();
+        long *val = entry_point(gc_alloc(666));
+        std::cout << "Derefing the arg to entry_point: " << *val << std::endl;
         return 0;
     }
-
-
 }
