@@ -1,4 +1,4 @@
-all: compile 
+all: compile-src make-statepoints compile-ir link
 
 OBJS = parser.o  \
        codegen.o \
@@ -34,12 +34,20 @@ parser: $(OBJS)
 gc:
 	+$(MAKE) -C runtime
 
-compile: parser gc example.txt
+compile-src: parser gc example.txt
 	./parser example.txt 2>&1 | sed -u 1,/BEGIN_IR/d > build/out.ll
 	# Perform statepoint relocation opt pass
-	opt -rewrite-statepoints-for-gc -S -o build/out-sp.ll build/out.ll
-	# # Assemble IR
-	llc -o build/out-sp.s build/out-sp.ll
-	clang++ -c -o build/out-sp.o build/out-sp.s
+make-statepoints:
+	~/projects/llvm-project/build/bim/opt -rewrite-statepoints-for-gc -S -o build/out-sp.ll build/out.ll
+
+compile-ir:
+	~/projects/llvm-project/build/bin/llc -filetype=obj -o build/out-sp.o build/out-sp.ll 
+
+link:
 	objcopy --globalize-symbol=__LLVM_StackMaps build/out-sp.o build/out-sp-globalised.o
-	clang++ -o build/a.out build/out-sp-globalised.o runtime/allocator.o runtime/statepoint.o
+	clang++ -O0 -o build/a.out \
+		build/out-sp-globalised.o \
+		runtime/gc_shim.S \
+		runtime/allocator.o \
+		runtime/statepoint.o 
+
